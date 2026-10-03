@@ -22,14 +22,14 @@ constexpr int BATAS_RENDAH      = 20;
 constexpr int BATAS_PENUH       = 90;
 
 // Sensor
-constexpr float CM_PER_US         = (331.3f + 0.606f * 28.0f) / 10000.0f;
-constexpr float FAKTOR_KALIBRASI  = 0.5333f;
-constexpr float ALPHA = 0.4f;
+constexpr float CM_PER_US  = 0.0343f;
+constexpr float OFFSET_CM  = 0.0f; 
+constexpr float ALPHA      = 0.4f;
 
-constexpr uint8_t JUMLAH_SAMPEL   = 5;
-constexpr uint8_t MAKS_GAGAL      = 3;
-constexpr uint32_t INTERVAL_MS    = 300;
-constexpr uint32_t TIMEOUT_US     = (uint32_t)(
+constexpr uint8_t JUMLAH_SAMPEL = 5;
+constexpr uint8_t MAKS_GAGAL    = 3;
+constexpr uint32_t INTERVAL_MS  = 300;
+constexpr uint32_t TIMEOUT_US   = (uint32_t)(
   ((JARAK_KOSONG_CM + 30.0f) * 2.0f) / CM_PER_US);
 
 float jarakHalus      = 0;
@@ -58,8 +58,10 @@ float bacaJarakSekali() {
   unsigned long durasi = pulseIn(ECHO_PIN, HIGH, TIMEOUT_US);
   if (durasi == 0) return -1.0f;
 
-  float jarak = durasi * CM_PER_US * 0.5f * FAKTOR_KALIBRASI;
-  return (jarak < JARAK_MIN_CM) ? -1.0f : jarak;
+  float jarak = durasi * CM_PER_US * 0.5f;
+  if (jarak < JARAK_MIN_CM) return -1.0f;
+
+  return jarak + OFFSET_CM;
 }
 
 float bacaJarakMedian() {
@@ -86,8 +88,8 @@ float bacaJarakMedian() {
 }
 
 int jarakKePersen(float jarak) {
-  float persen = (JARAK_KOSONG_CM - jarak) / 
-  (JARAK_KOSONG_CM - JARAK_PENUH_CM) * 100.0f;
+  float persen = (JARAK_KOSONG_CM - jarak) /
+                 (JARAK_KOSONG_CM - JARAK_PENUH_CM) * 100.0f;
   return constrain((int)roundf(persen), 0, 100);
 }
 
@@ -103,6 +105,7 @@ void teksTengah(const char* teks, int y) {
 void tampilError() {
   display.clearDisplay();
   display.setTextColor(SH110X_WHITE);
+  display.setTextSize(1);
   display.setCursor(35, 30);
   display.print("CEK SENSOR");
   display.display();
@@ -125,20 +128,16 @@ void tampilUtama(float jarakCm, int persen) {
   display.setCursor(0, 44);
   display.printf("Jarak: %.1f cm", jarakCm);
   display.setCursor(0, 56);
-  display.print(persen <= BATAS_RENDAH ? "RENDAH" : persen >= 
-               BATAS_PENUH ? "PENUH" : "NORMAL");
+  display.print(persen <= BATAS_RENDAH ? "RENDAH" :
+                persen >= BATAS_PENUH  ? "PENUH"  : "NORMAL");
 
   // bar level
-  constexpr int BX = 90, 
-                BY = 14, 
-                BW = 32, 
-                BH = 48;
-                
+  constexpr int BX = 90, BY = 14, BW = 32, BH = 48;
   constexpr int isiMaks = BH - 4;
   int isi = (persen * isiMaks + 50) / 100;
   display.drawRect(BX, BY, BW, BH, SH110X_WHITE);
-  display.fillRect(BX + 2, BY + 2 + (isiMaks - isi), 
-                    BW - 4, isi, SH110X_WHITE);
+  display.fillRect(BX + 2, BY + 2 + (isiMaks - isi),
+                   BW - 4, isi, SH110X_WHITE);
 
   display.display();
 }
@@ -174,8 +173,8 @@ void loop() {
   }
   gagalBeruntun = 0;
 
-  jarakHalus = sudahInit ? ALPHA * jarak + 
-              (1.0f - ALPHA) * jarakHalus : jarak;
+  jarakHalus = sudahInit ? ALPHA * jarak + (1.0f - ALPHA) * jarakHalus
+                         : jarak;
   sudahInit = true;
 
   int persen = jarakKePersen(jarakHalus);
