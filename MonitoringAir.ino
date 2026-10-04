@@ -15,15 +15,15 @@ constexpr int BUZZER_OFF = 98;
 Adafruit_SH1106G display(128, 64, &Wire, -1);
 
 // Air
-constexpr float JARAK_PENUH_CM  = 5.0f;
+constexpr float JARAK_PENUH_CM  = 3.5f;
 constexpr float JARAK_KOSONG_CM = 20.0f;
 constexpr float JARAK_MIN_CM    = 2.0f;
 constexpr int BATAS_RENDAH      = 20;
 constexpr int BATAS_PENUH       = 90;
 
 // Sensor
-constexpr float CM_PER_US  = 0.0343f;
-constexpr float OFFSET_CM  = 0.0f; 
+constexpr float CM_PER_US  = 0.0343f; 
+constexpr float OFFSET_CM  = -0.5f;  // faktor penjumlahan/pengurangan
 constexpr float ALPHA      = 0.4f;
 
 constexpr uint8_t JUMLAH_SAMPEL = 5;
